@@ -1,0 +1,64 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: standard
+  enable:
+    - copyloopvar
+    - dupword
+    - errorlint
+    - forcetypeassert
+    - gocheckcompilerdirectives
+    - gocritic
+    - intrange
+    - misspell
+    - modernize
+    - nilerr
+    - nolintlint
+    - prealloc
+    - predeclared
+    - unconvert
+    - unparam
+    - usetesting
+    - wastedassign
+    # The linter this repository ships, dogfooded on itself.
+    # Requires the custom binary: `make lint` (see .custom-gcl.yml).
+    - easyreader
+
+  settings:
+    custom:
+      easyreader:
+        type: module
+        description: Comment style rules (line width, punctuation, block length, unicode, blank lines; fill unimplemented).
+        # No settings here on purpose: the defaults in pkg/config.go apply.
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+  exclusions:
+    generated: lax
+    paths:
+      # analysistest fixtures contain deliberate violations and // want annotations.
+      - (^|/)testdata/
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/pyrohedgehog/easy-reader
+
+  exclusions:
+    generated: lax
+    paths:
+      - (^|/)testdata/
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
