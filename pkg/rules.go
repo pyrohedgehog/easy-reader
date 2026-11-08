@@ -13,7 +13,6 @@ import (
 var (
 	// Exemption predicates shared by the punctuation and reflow rules.
 	listItemRe   = regexp.MustCompile(`^([-*+][ \t]|[0-9]+[.)][ \t])`)
-	urlTailRe    = regexp.MustCompile(`https?://[^ \t]+$`)
 	separatorRe  = regexp.MustCompile(`^[-*=~_. \t]+$`)
 	structuralRe = regexp.MustCompile(`[{},);]$`)
 	directiveRe  = regexp.MustCompile(`^(go:|\+build|line\b|export\b|nolint:|lint:)`)
@@ -29,6 +28,10 @@ func checkLineWidth(pass *analysis.Pass, limit int, l commentLine, fix *analysis
 	// TODO: this should ideally ignore the indentation depth prior to the comments start.
 	n := utf8.RuneCountInString(t)
 	if n <= limit {
+		return
+	}
+	// A URL or path-like last word is unbreakable; if the line fits without it, leave it be.
+	if head, word := splitLastWord(t); utf8.RuneCountInString(head) <= limit && isJoinedLong(word) {
 		return
 	}
 	d := analysis.Diagnostic{
@@ -111,12 +114,13 @@ func checkStrangeChars(pass *analysis.Pass, l commentLine) {
 }
 
 // shouldSkipPunct reports whether a standalone comment line is exempt from the punctuation rule:
-// code fences, list items, URLs, separator lines, directives, and structural endings.
+// code fences, list items, URLs, slash-joined tails, separator lines, directives, and structural endings.
 func shouldSkipPunct(t string) bool {
 	lead := strings.TrimLeft(t, " \t")
+	_, word := splitLastWord(t)
 	return strings.HasPrefix(t, "```") ||
 		listItemRe.MatchString(lead) ||
-		urlTailRe.MatchString(t) ||
+		isJoinedLong(word) ||
 		separatorRe.MatchString(t) ||
 		structuralRe.MatchString(t) ||
 		directiveRe.MatchString(lead)
@@ -125,4 +129,18 @@ func shouldSkipPunct(t string) bool {
 // isDirective reports whether a comment line is a toolchain directive that must stay on one line.
 func isDirective(t string) bool {
 	return directiveRe.MatchString(strings.TrimLeft(t, " \t"))
+}
+
+// splitLastWord splits t at the final space or tab, returning the head and last word.
+func splitLastWord(t string) (head, word string) {
+	i := strings.LastIndexAny(t, " \t")
+	if i < 0 {
+		return "", t
+	}
+	return t[:i], t[i+1:]
+}
+
+// isJoinedLong reports whether word is a URL, file path, or similar token joined by slashes.
+func isJoinedLong(word string) bool {
+	return strings.ContainsAny(word, "/\\")
 }

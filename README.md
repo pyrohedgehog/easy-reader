@@ -152,7 +152,6 @@ make fuzz   # 30s per fuzz target by default; make fuzz FUZZTIME=5m for longer
 - [ ] dedupe identical suggested fixes: several diagnostics in one block can carry the same reflow edit.
 - [ ] empty-line fix collapses leading/trailing blank lines the rule does not report; align fix with diagnostics.
 - [ ] test coverage for the punctuation/boundary exemption edge cases: URLs, code fences, list items, separators, structural endings.
-- [ ] auto allow URLs to exceed standard length limits.
 - [ ] make the exportedness inheritance of non-doc comments configurable (comments.go).
 - [ ] line-width: base the limit on the comment text itself, ignoring leading indentation (rules.go).
 - [ ] punctuation auto-fix for `/* */` comment lines (reported without a fix today).
