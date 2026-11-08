@@ -8,7 +8,7 @@ CUSTOM_GCL ?= ./custom-gcl
 # so the warning below only fires for a binary that already existed.
 CUSTOM_GCL_PREBUILT := $(wildcard $(CUSTOM_GCL))
 
-.PHONY: lint lint-fix fmt test custom-gcl
+.PHONY: lint lint-fix fmt test fuzz custom-gcl
 
 lint: $(CUSTOM_GCL)
 	@if [ -n "$(CUSTOM_GCL_PREBUILT)" ]; then \
@@ -29,6 +29,11 @@ fmt:
 
 test:
 	go test ./...
+
+# FUZZTIME can be raised for longer sessions, e.g. make fuzz FUZZTIME=5m.
+fuzz:
+	go test -fuzz=FuzzAnalyzer -fuzztime=$(FUZZTIME) ./pkg
+	go test -fuzz=FuzzFixpoint -fuzztime=$(FUZZTIME) ./pkg
 
 # Builds golangci-lint with the easyreader plugin (clones upstream once).
 $(CUSTOM_GCL): .custom-gcl.yml
